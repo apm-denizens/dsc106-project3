@@ -8,7 +8,10 @@
 
 <!-- Create an element where the map will take place -->
 <body style="margin: 0px">
-<svg id="my_dataviz" width="800" height="300"></svg>
+    <div style="width: 100%">
+        <h1 style="text-align: center">Energy Usage Throughout the World</h1>
+        <svg id="my_dataviz" width="800" height="300"></svg>
+    </div>
 </body>
 
 
@@ -41,6 +44,9 @@
 
 
     function ready(error, geo_json, csv) {
+
+        console.log(geo_json)
+
         projection.fitSize([width, height], geo_json);
 
         csv.forEach(val => data.set(val.code, +val.pop))
@@ -74,9 +80,9 @@
             .data(geo_json.features)
             .enter()
             .append("path")
-            // draw each country
+            // get path definition for each geo_json feature without a dom element
             .attr("d", d3.geoPath()
-                .projection(projection)
+                .projection(projection) // configures path generator to use the projection provided
             )
             // set the color of each country
             .attr("fill", function (d) {

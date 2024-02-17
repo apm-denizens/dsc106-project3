@@ -2,95 +2,53 @@
     // import d3
     import { onMount } from "svelte";
     import * as d3 from "d3";
+    import { queue } from "d3-queue"
 
+
+    // console.log(d3.select("svg")) // document undefined. need to perform this selection inside onMount to make sure the svg is first rendered
     onMount(async () => {
-        var svg = d3.select("svg"),
-            width = +svg.attr("width"),
-            height = +svg.attr("height");
+        console.log(d3.select("svg"))
+        let svg = d3.select("svg")
+        svg.attr("width", window.innerWidth)
+        svg.attr("height", window.innerHeight)
+
+        var width = +svg.attr("width");
+        var height = +svg.attr("height");
 
         // Map and projection
-        var path = d3.geoPath();
-        var projection = d3
-            .geoEquirectangular()
-            .scale(100)
-            .center([0, 20])
-            .translate([width / 2, height / 2]);
+        var pathGenerator = d3.geoPath(); 
+        var projection = d3.geoEquirectangular()
 
-        // Data and color scale
-        // @ts-ignore
-        var data = d3.map();
-        var colorScale = d3
-            .scaleThreshold()
-            .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
-            // @ts-ignore
-            .range(d3.schemeBlues[7]);
+        Promise.all([
+            fetch("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson").then(response => response.json()),
+            d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world_population.csv")
+        ]).then(([geo_json, csv]) => {
+            ready(null, geo_json, csv);
+        })
 
-        // Load external data and boot
-        // @ts-ignore
-        d3.queue()
-            .defer(
-                d3.json,
-                "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson"
-            )
-            .defer(
-                d3.csv,
-                "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world_population.csv",
-                function (d: any) {
-                    // @ts-ignore
-                    data.set(d.code, +d.pop);
-                }
-            )
-            .await(ready);
+        // queue()
+        //     .defer(d3.json, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
+        //     .defer(d3.csv, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world_population.csv")
+        //     .await(ready);
 
-        // @ts-ignore
-        function ready(error, topo) {
-            // @ts-ignore
-            let mouseOver = function (d) {
-                d3.selectAll(".Country") // reset all countries
-                    .transition()
-                    .duration(200)
-                    .style("opacity", 0.5)
-                    .style("stroke", "transparent");
-                            // @ts-ignore
-                d3.select(this) // then highlight the current country
-                    .transition()
-                    .duration(200)
-                    .style("opacity", 1)
-                    .style("stroke", "black");
-            };
-
-                    // @ts-ignore
-            let mouseLeave = function (d) {
-                d3.selectAll(".Country")
-                    .transition()
-                    .duration(200)
-                    .style("opacity", 1)
-                    .style("stroke", "transparent");
-            };
-
-            // Draw the map
+        function ready(error: any, geo_json: d3.ExtendedFeatureCollection, csv: d3.DSVRowArray) {
+            console.log("SANITY CHECK")
+            console.log(error)
+            console.log(geo_json)
+            projection.fitSize([width, height], geo_json);
+            // const data_tempmap = new Map<string, number>()
+            // csv.forEach(val => data_tempmap.set(val.code, +val.pop))
+            // const data = d3.map(data_tempmap)
             svg.append("g")
                 .selectAll("path")
-                .data(topo.features)
+                .data(geo_json.features)
                 .enter()
                 .append("path")
-                // draw each country
-                        // @ts-ignore
-                .attr("d", d3.geoPath().projection(projection))
-                // set the color of each country
-                .attr("fill", function (d) {
-                            // @ts-ignore
-                    d.total = data.get(d.id) || 0;
-                        // @ts-ignore
-                    return colorScale(d.total);
-                })
-                .style("stroke", "transparent")
-                .attr("class", function (d) {
-                    return "Country";
-                })
-                .style("opacity", 0.8)
-                .on("mouseover", mouseOver)
-                .on("mouseleave", mouseLeave);
+                // get path definition for each geo_json feature without a dom element
+                .attr("d", d3.geoPath()
+                    .projection(projection) // configures path generator to use the projection provided
+                )
+
         }
     });
 
