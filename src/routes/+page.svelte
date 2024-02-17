@@ -4,34 +4,96 @@
     import * as d3 from "d3";
 
     onMount(async () => {
-        const svg = d3
-            .select("body")
-            .append("svg")
-            .attr("width", 960)
-            .attr("height", 600);
+        var svg = d3.select("svg"),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
 
-        const projection = d3.geoEquirectangular();
-        const path = d3.geoPath(projection);
+        // Map and projection
+        var path = d3.geoPath();
+        var projection = d3
+            .geoEquirectangular()
+            .scale(100)
+            .center([0, 20])
+            .translate([width / 2, height / 2]);
 
-        const response = await fetch(
-            "https://unpkg.com/world-atlas@1/world/110m.json"
-        );
-        const data = await response.json();
-
-        svg.selectAll("path")
-            .data(data.features)
-            .enter()
-            .append("path")
+        // Data and color scale
+        // @ts-ignore
+        var data = d3.map();
+        var colorScale = d3
+            .scaleThreshold()
+            .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
             // @ts-ignore
-            .attr("d", path)
-            .style("fill", "steelblue");
+            .range(d3.schemeBlues[7]);
+
+        // Load external data and boot
+        // @ts-ignore
+        d3.queue()
+            .defer(
+                d3.json,
+                "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson"
+            )
+            .defer(
+                d3.csv,
+                "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world_population.csv",
+                function (d: any) {
+                    // @ts-ignore
+                    data.set(d.code, +d.pop);
+                }
+            )
+            .await(ready);
+
+        // @ts-ignore
+        function ready(error, topo) {
+            // @ts-ignore
+            let mouseOver = function (d) {
+                d3.selectAll(".Country") // reset all countries
+                    .transition()
+                    .duration(200)
+                    .style("opacity", 0.5)
+                    .style("stroke", "transparent");
+                            // @ts-ignore
+                d3.select(this) // then highlight the current country
+                    .transition()
+                    .duration(200)
+                    .style("opacity", 1)
+                    .style("stroke", "black");
+            };
+
+                    // @ts-ignore
+            let mouseLeave = function (d) {
+                d3.selectAll(".Country")
+                    .transition()
+                    .duration(200)
+                    .style("opacity", 1)
+                    .style("stroke", "transparent");
+            };
+
+            // Draw the map
+            svg.append("g")
+                .selectAll("path")
+                .data(topo.features)
+                .enter()
+                .append("path")
+                // draw each country
+                        // @ts-ignore
+                .attr("d", d3.geoPath().projection(projection))
+                // set the color of each country
+                .attr("fill", function (d) {
+                            // @ts-ignore
+                    d.total = data.get(d.id) || 0;
+                        // @ts-ignore
+                    return colorScale(d.total);
+                })
+                .style("stroke", "transparent")
+                .attr("class", function (d) {
+                    return "Country";
+                })
+                .style("opacity", 0.8)
+                .on("mouseover", mouseOver)
+                .on("mouseleave", mouseLeave);
+        }
     });
 
-    console.log("sanity check");
-    
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>
-    Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation
-</p>
+<svg id="my_dataviz" width="800" height="600"></svg>

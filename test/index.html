@@ -7,78 +7,89 @@
 <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
 
 <!-- Create an element where the map will take place -->
-<svg id="my_dataviz" width="800" height="600"></svg>
+<body style="margin: 0px">
+<svg id="my_dataviz" width="800" height="300"></svg>
+</body>
 
 
 <script>
 
     // The svg
-    var svg = d3.select("svg"),
-      width = +svg.attr("width"),
-      height = +svg.attr("height");
-    
+    var svg = d3.select("svg")
+    svg.attr("width", window.innerWidth)
+    svg.attr("height", window.innerHeight)
+
+    var width = +svg.attr("width");
+    var height = +svg.attr("height");
+
     // Map and projection
     var path = d3.geoPath();
-    var projection = d3.geoMercator()
-      .scale(100)
-      .center([0,20])
-      .translate([width / 2, height / 2]);
-    
+    var projection = d3.geoEquirectangular()
+        // .translate([width / 2, height / 2]);
+
     // Data and color scale
     var data = d3.map();
     var colorScale = d3.scaleThreshold()
-      .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
-      .range(d3.schemeBlues[7]);
-    
+        .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
+        .range(d3.schemeBlues[7]);
+
     // Load external data and boot
     d3.queue()
-      .defer(d3.json, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
-      .defer(d3.csv, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world_population.csv", function(d) { data.set(d.code, +d.pop); })
-      .await(ready);
-    
-    function ready(error, topo) {
-    
-      let mouseOver = function(d) {
-        d3.selectAll(".Country") // reset all countries
-          .transition()
-          .duration(200)
-          .style("opacity", .5)
-          .style("stroke", "transparent")
-        d3.select(this) // then highlight the current country
-          .transition()
-          .duration(200)
-          .style("opacity", 1)
-          .style("stroke", "black")
-      }
-    
-      let mouseLeave = function(d) {
-        d3.selectAll(".Country")
-          .transition()
-          .duration(200)
-          .style("opacity", 1)
-          .style("stroke", "transparent")
-      }
-    
-      // Draw the map
-      svg.append("g")
-        .selectAll("path")
-        .data(topo.features)
-        .enter()
-        .append("path")
-          // draw each country
-          .attr("d", d3.geoPath()
-            .projection(projection)
-          )
-          // set the color of each country
-          .attr("fill", function (d) {
-            d.total = data.get(d.id) || 0;
-            return colorScale(d.total);
-          })
-          .style("stroke", "transparent")
-          .attr("class", function(d){ return "Country" } )
-          .style("opacity", .8)
-          .on("mouseover", mouseOver )
-          .on("mouseleave", mouseLeave )
+        .defer(d3.json, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
+        .defer(d3.csv, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world_population.csv")
+        .await(ready);
+
+
+    function ready(error, geo_json, csv) {
+        projection.fitSize([width, height], geo_json);
+
+        csv.forEach(val => data.set(val.code, +val.pop))
+
+        // , function (d) { data.set(d.code, +d.pop); }
+
+        let mouseOver = function (d) {
+            d3.selectAll(".Country") // reset all countries
+                .transition()
+                .duration(200)
+                .style("opacity", .5)
+                .style("stroke", "transparent")
+            d3.select(this) // then highlight the current country
+                .transition()
+                .duration(200)
+                .style("opacity", 1)
+                .style("stroke", "black")
         }
-    
-    </script>
+
+        let mouseLeave = function (d) {
+            d3.selectAll(".Country")
+                .transition()
+                .duration(200)
+                .style("opacity", 1)
+                .style("stroke", "transparent")
+        }
+
+        // Draw the map
+        svg.append("g")
+            .selectAll("path")
+            .data(geo_json.features)
+            .enter()
+            .append("path")
+            // draw each country
+            .attr("d", d3.geoPath()
+                .projection(projection)
+            )
+            // set the color of each country
+            .attr("fill", function (d) {
+                d.total = data.get(d.id) || 0;
+                return colorScale(d.total);
+            })
+            .style("stroke", "transparent")
+            .attr("class", function (d) { return "Country" })
+            .style("opacity", .8)
+            .on("mouseover", mouseOver)
+            .on("mouseleave", mouseLeave)
+    }
+
+</script>
+
+</html>
