@@ -2,7 +2,7 @@
     // import d3
     import { onMount } from "svelte";
     import * as d3 from "d3";
-    import { queue } from "d3-queue"
+    // import { queue } from "d3-queue"
 
 
     // console.log(d3.select("svg")) // document undefined. need to perform this selection inside onMount to make sure the svg is first rendered
