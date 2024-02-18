@@ -4,8 +4,8 @@
 
     onMount(async () => {
         let svg = d3.select("svg");
-        width = window.innerWidth;
-        height = window.innerHeight;
+        width = 800;
+        height = 400;
         svg.attr("width", width);
         svg.attr("height", height);
         svg.attr("viewBox", `0 0 ${width} ${height}`).attr(
@@ -59,7 +59,7 @@
             .scaleThreshold()
             .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
             // @ts-ignore
-            .range(d3.schemeBlues[7]);
+            .range(d3.schemeOranges[7]);
 
         function ready(
             geo_json: d3.ExtendedFeatureCollection,
@@ -135,35 +135,39 @@
             solar: false,
             wind: false,
             hydro: false,
-            geothermal: false,
-            biomass: false,
-            nuclear: false,
+            biofuel: false,
         },
 
         fossil_fuels: false,
         fossil_fuel_types: {
             coal: false,
             oil: false,
-            natural_gas: false,
+            gas: false,
+        },
+        others: false,
+        other_types: {
+            nuclear: false,
         },
     };
 
-    const handleFilterInput = (type: "renewables" | "ffs") => {
+    const handleFilterInput = (type: "renewables" | "ffs" | "others") => {
         if (type == "renewables") {
             const setTo = !filters.renewables;
             filters.renewables = setTo;
             filters.renewable_types.solar = setTo;
             filters.renewable_types.wind = setTo;
             filters.renewable_types.hydro = setTo;
-            filters.renewable_types.geothermal = setTo;
-            filters.renewable_types.biomass = setTo;
-            filters.renewable_types.nuclear = setTo;
+            filters.renewable_types.biofuel = setTo;
         } else if (type == "ffs") {
             const setTo = !filters.fossil_fuels;
             filters.fossil_fuels = setTo;
             filters.fossil_fuel_types.coal = setTo;
             filters.fossil_fuel_types.oil = setTo;
-            filters.fossil_fuel_types.natural_gas = setTo;
+            filters.fossil_fuel_types.gas = setTo;
+        } else if(type == "others") {
+            const setTo = !filters.others;
+            filters.others = setTo;
+            filters.other_types.nuclear = setTo;
         }
     };
 
@@ -176,7 +180,7 @@
     <h1>Worldwide Energy Usage</h1>
 
     <div style="display:flex; flex-direction: row; padding: 20px;">
-        <form>
+        <form style="margin-right: 10px;">
             <label>
                 <input
                     type="checkbox"
@@ -185,7 +189,7 @@
                 />
                 Renewables
             </label>
-            <ul>
+            <ul style="margin-top: 0;">
                 {#each Object.keys(filters.renewable_types) as key (key)}
                     <li>
                         <label>
@@ -207,7 +211,7 @@
                 />
                 Fossil Fuels
             </label>
-            <ul>
+            <ul style="margin-top: 0;">
                 {#each Object.keys(filters.fossil_fuel_types) as key (key)}
                     <li>
                         <label>
@@ -220,6 +224,27 @@
                     </li>
                 {/each}
             </ul>
+
+            <label>
+                <input
+                    type="checkbox"
+                    bind:checked={filters.others}
+                    on:input={(e) => handleFilterInput("others")}
+                />
+                Others
+            </label>
+            <ul style="margin-top: 0;">
+                {#each Object.keys(filters.other_types) as key (key)}
+                    <li>
+                        <label>
+                            <input
+                                type="checkbox"
+                                bind:checked={filters.other_types[key]}
+                            />
+                            {capitalizeFirstLetter(key)}
+                        </label>
+                    </li>
+                {/each}
         </form>
         <div>
             <form>
@@ -229,8 +254,9 @@
                     <input type="range" bind:value={year} name="volume" min="1950" max="2016">
                 </label>
             </form>
-            <div id="tooltip">
+            <div id="tooltip" style="opacity: 0;">
                 ASDF
+                asdf
             </div>
             <svg id="my_dataviz"></svg>
         </div>
