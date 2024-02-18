@@ -65,32 +65,37 @@
             geo_json: d3.ExtendedFeatureCollection,
             csv: d3.DSVRowArray
         ) {
-            // @ts-ignore
-            // var data = d3.map();
             var map = new Map<string, number>();
             csv.forEach((row) => map.set(row.code, +row.pop));
             console.log(map);
 
             // @ts-ignore
-            let mouseOver = function (d: any) {
+            let mouseOver = function (e: MouseEvent) {
+                console.log(e)
                 d3.selectAll(".Country") // reset all countries
                     .transition()
                     .duration(200)
                     .style("opacity", 0.5)
                     .style("stroke", "transparent");
-                // @ts-ignore
-                d3.select(this)
+
+                d3.select(e.target as HTMLElement)
                     .transition()
                     .duration(200)
                     .style("opacity", 1)
                     .style("stroke", "black");
-                d3.select("#tooltip")
-                    .style("opacity", 1) // Show the tooltip
+                // @ts-ignore
+                // d3.select(this)
+                //     .transition()
+                //     .duration(200)
+                //     .style("opacity", 1)
+                //     .style("stroke", "black");
+                // d3.select("#tooltip")
+                    // .style("opacity", 1) // Show the tooltip
                     // @ts-ignore
-                    .html(`Region: ${d.properties.name}<br>Value: ${d.value}`); // Set the tooltip content
+                    // .html(`Region: ${d.properties.name}<br>Value: ${d.value}`); // Set the tooltip content
             };
 
-            let mouseLeave = function () {
+            let mouseLeave = function (e: MouseEvent) {
                 d3.selectAll(".Country")
                     .transition()
                     .duration(200)
@@ -99,10 +104,10 @@
                 d3.select("#tooltip").style("opacity", 0); // Hide the tooltip
             };
 
-            let mouseMove = function (event) {
+            let mouseMove = function (e: MouseEvent) {
                 d3.select("#tooltip")
-                    .style("left", event.pageX + 10 + "px") // Position the tooltip to the right of the cursor
-                    .style("top", event.pageY + 10 + "px"); // Position the tooltip below the cursor
+                    .style("left", e.pageX + 10 + "px") // Position the tooltip to the right of the cursor
+                    .style("top", e.pageY + 10 + "px"); // Position the tooltip below the cursor
             };
 
             projection.fitSize([width, height], geo_json);
@@ -119,9 +124,8 @@
                     return colorScale(map.get(d.id) || 0);
                 })
                 .style("stroke", "transparent")
-                .attr("class", function (d) {
-                    return "Country";
-                })
+                .attr("class", (d) => "Country")
+                .attr("id", (d) => d.id as string)
                 .style("opacity", 1)
                 .on("mouseover", mouseOver)
                 .on("mouseleave", mouseLeave);
