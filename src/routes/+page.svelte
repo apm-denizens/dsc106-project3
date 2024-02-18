@@ -33,7 +33,10 @@
         .range(d3.schemeOranges[7]);
 
     
-    let geo_json: d3.ExtendedFeatureCollection;
+    let mounted = false;
+    let gjson: d3.ExtendedFeatureCollection | undefined = undefined;
+    let gmap: Map<string, MapElement> | undefined = undefined;
+    let gpath: d3.GeoPath<d3.GeoPermissibleObjects, d3.GeoPermissibleObjects> | undefined = undefined;
     onMount(async () => {
         let svg = d3.select("svg");
         let width = 800;
@@ -100,6 +103,11 @@
                 })
             );
 
+            gjson = geo_json;
+            gmap = map;
+            projection.fitSize([width, height], geo_json);
+            gpath = d3.geoPath().projection(projection);
+
             let mouseOver = function (e: MouseEvent) {
                 const target = e.target as HTMLElement;
                 const datapoint = map.get(`${target.id}-${year}`)!;
@@ -127,8 +135,8 @@
                         total += Number(datapoint[key + "_consumption"])
                     }
                 }
-                console.log(html_string)
-                console.log(total)
+                // console.log(html_string)
+                // console.log(total)
 
                 d3.select("#tooltip")
                     .style("opacity", 1)
@@ -152,7 +160,6 @@
                     .style("top", e.pageY + 10 + "px"); // Position the tooltip below the cursor
             };
 
-            projection.fitSize([width, height], geo_json);
             svg.append("g")
                 .selectAll("path")
                 .data(geo_json.features)
@@ -160,7 +167,7 @@
                 .append("path")
                 // get path definition for each geo_json feature without a dom element
                 // configure a svg path generator to use the projection function provided
-                .attr("d", d3.geoPath().projection(projection))
+                .attr("d", gpath)
                 .attr("fill", function (d) {
                     const datapoint = map.get(`${d.id}-${year}`);
                     // sum across all consumptions
@@ -190,7 +197,7 @@
                             ? datapoint?.nuclear_consumption || 0
                             : 0);
 
-                    console.log(d.id, totalConsumption);
+                    // console.log(d.id, totalConsumption);
                     return colorScale(totalConsumption);
                 })
                 .style("stroke", "transparent")
@@ -200,6 +207,7 @@
                 .on("mouseover", mouseOver)
                 .on("mouseleave", mouseLeave);
 
+            mounted = true;
         }
     });
 
@@ -248,9 +256,54 @@
     };
 
     // seems you have to place reactive statements after the function definitions
+    // variables used inside this reactive statement are considered dependencies i guess
+    // so you have to make sure that they're used inside the reactive statement
     $: {
-        console.log(year)
-        console.log(filters)
+        if(mounted && gjson && gmap) {
+            console.log(mounted)
+            console.log(year)
+            console.log(filters)
+            console.log(gmap)
+            console.log(gjson);
+            console.log(gpath)
+
+            
+            d3.selectAll("path")
+                .data(gjson.features)
+                .attr("fill", function (d) {
+                    const datapoint = gmap.get(`${d.id}-${year}`);
+                    // sum across all consumptions
+                    const totalConsumption =
+                        (filters.renewable_types.solar
+                            ? datapoint?.solar_consumption || 0
+                            : 0) +
+                        (filters.renewable_types.wind
+                            ? datapoint?.wind_consumption || 0
+                            : 0) +
+                        (filters.renewable_types.hydro
+                            ? datapoint?.hydro_consumption || 0
+                            : 0) +
+                        (filters.renewable_types.biofuel
+                            ? datapoint?.biofuel_consumption || 0
+                            : 0) +
+                        (filters.fossil_fuel_types.coal
+                            ? datapoint?.coal_consumption || 0
+                            : 0) +
+                        (filters.fossil_fuel_types.gas
+                            ? datapoint?.gas_consumption || 0
+                            : 0) +
+                        (filters.fossil_fuel_types.oil
+                            ? datapoint?.oil_consumption || 0
+                            : 0) +
+                        (filters.other_types.nuclear
+                            ? datapoint?.nuclear_consumption || 0
+                            : 0);
+
+                    // console.log(d.id, totalConsumption);
+                    return colorScale(totalConsumption);
+                })
+            
+        }
     }
 
 
