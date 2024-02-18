@@ -130,6 +130,7 @@
         }
     });
 
+    $: year = 2000;
     $: filters = {
         renewables: false,
         renewable_types: {
@@ -176,50 +177,61 @@
 <div>
     <h1>Worldwide Energy Usage</h1>
 
-    <form>
-        <label>
-            <input
-                type="checkbox"
-                bind:checked={filters.renewables}
-                on:input={(e) => handleFilterInput("renewables")}
-            />
-            Renewables
-        </label>
-        <ul>
-            {#each Object.keys(filters.renewable_types) as key (key)}
-                <li>
-                    <label>
-                        <input
-                            type="checkbox"
-                            bind:checked={filters.renewable_types[key]}
-                        />
-                        {capitalizeFirstLetter(key)}
-                    </label>
-                </li>
-            {/each}
-        </ul>
+    <div style="display:flex; flex-direction: row; padding: 20px;">
+        <form>
+            <label>
+                <input
+                    type="checkbox"
+                    bind:checked={filters.renewables}
+                    on:input={(e) => handleFilterInput("renewables")}
+                />
+                Renewables
+            </label>
+            <ul>
+                {#each Object.keys(filters.renewable_types) as key (key)}
+                    <li>
+                        <label>
+                            <input
+                                type="checkbox"
+                                bind:checked={filters.renewable_types[key]}
+                            />
+                            {capitalizeFirstLetter(key)}
+                        </label>
+                    </li>
+                {/each}
+            </ul>
 
-        <label>
-            <input
-                type="checkbox"
-                bind:checked={filters.fossil_fuels}
-                on:input={(e) => handleFilterInput("ffs")}
-            />
-            Fossil Fuels
-        </label>
-        <ul>
-            {#each Object.keys(filters.fossil_fuel_types) as key (key)}
-                <li>
-                    <label>
-                        <input
-                            type="checkbox"
-                            bind:checked={filters.fossil_fuel_types[key]}
-                        />
-                        {capitalizeFirstLetter(key)}
-                    </label>
-                </li>
-            {/each}
-        </ul>
-    </form>
-    <svg id="my_dataviz"></svg>
+            <label>
+                <input
+                    type="checkbox"
+                    bind:checked={filters.fossil_fuels}
+                    on:input={(e) => handleFilterInput("ffs")}
+                />
+                Fossil Fuels
+            </label>
+            <ul>
+                {#each Object.keys(filters.fossil_fuel_types) as key (key)}
+                    <li>
+                        <label>
+                            <input
+                                type="checkbox"
+                                bind:checked={filters.fossil_fuel_types[key]}
+                            />
+                            {capitalizeFirstLetter(key)}
+                        </label>
+                    </li>
+                {/each}
+            </ul>
+        </form>
+        <div>
+            <form>
+                <label>
+                    Year<br>
+                    <input bind:value={year}><br>
+                    <input type="range" bind:value={year} name="volume" min="1950" max="2016">
+                </label>
+            </form>
+            <svg id="my_dataviz"></svg>
+        </div>
+    </div>
 </div>
