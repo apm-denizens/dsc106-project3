@@ -32,6 +32,8 @@
         .domain([1000, 3000, 5000, 7000, 10000, 13000])
         .range(d3.schemeOranges[7]);
 
+    
+    let geo_json: d3.ExtendedFeatureCollection;
     onMount(async () => {
         let svg = d3.select("svg");
         let width = 800;
@@ -121,7 +123,7 @@
                 let merged = Object.assign({}, filters.renewable_types, filters.fossil_fuel_types, filters.other_types)
                 for (const [key, value] of Object.entries(merged)) {
                     if(value) {
-                        html_string += `${capitalizeFirstLetter(key)}: ${datapoint[key + "_consumption"]}<br>`
+                        html_string += `${capitalizeFirstLetter(key)}: ${Math.round(Number(datapoint[key + "_consumption"]))}<br>`
                         total += Number(datapoint[key + "_consumption"])
                     }
                 }
@@ -131,7 +133,7 @@
                 d3.select("#tooltip")
                     .style("opacity", 1)
                     .html(
-                        `Region: ${datapoint.country}<br>TOTAL: ${total}<br>${html_string}`
+                        `Region: ${datapoint.country}<br>TOTAL: ${Math.round(total)}<br>${html_string}`
                     )
             };
 
@@ -201,8 +203,18 @@
         }
     });
 
-    $: year = 2000;
-    $: filters = {
+    let year = 2000;
+    $: {
+        console.log(year)
+
+    }
+    // $: {
+    //     console.log(year)
+    //     d3.selectAll("path")    
+    //             .data(geo_json.features)
+    //             .enter()
+    // }
+    let filters = {
         renewables: true,
         renewable_types: {
             solar: true,
@@ -321,7 +333,7 @@
                 {/each}
             </ul>
         </form>
-        <div>
+        <div style="width: 200px">
             <form>
                 <label>
                     Year<br />
@@ -337,7 +349,7 @@
                 </label>
             </form>
             <div id="tooltip" style="opacity: 0;">ASDF asdf</div>
-            <svg id="my_dataviz"></svg>
         </div>
+        <svg id="my_dataviz"></svg>
     </div>
 </div>
