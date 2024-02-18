@@ -2,16 +2,46 @@
     import { onMount } from "svelte";
     import * as d3 from "d3";
 
+    type Features =
+        | "country"
+        | "year"
+        | "iso_code"
+        | "solar_consumption"
+        | "wind_consumption"
+        | "hydro_consumption"
+        | "biofuel_consumption"
+        | "coal_consumption"
+        | "gas_consumption"
+        | "oil_consumption"
+        | "nuclear_consumption";
+
+    interface MapElement {
+        country: string;
+        solar_consumption: number;
+        wind_consumption: number;
+        hydro_consumption: number;
+        biofuel_consumption: number;
+        coal_consumption: number;
+        gas_consumption: number;
+        oil_consumption: number;
+        nuclear_consumption: number;
+    }
+
+    var colorScale = d3
+        .scaleThreshold()
+        .domain([1000, 3000, 5000, 7000, 10000, 13000])
+        .range(d3.schemeOranges[7]);
+
     onMount(async () => {
         let svg = d3.select("svg");
-        width = 800;
-        height = 400;
+        let width = 800;
+        let height = 400;
         svg.attr("width", width);
         svg.attr("height", height);
         svg.attr("viewBox", `0 0 ${width} ${height}`).attr(
             "preserveAspectRatio",
             "xMidYMid meet"
-        ); // Adjust this value based on your needs
+        );
 
         const zoom = d3
             .zoom()
@@ -25,52 +55,52 @@
                 [width, height],
             ]) // Set the viewport extent to the SVG dimensions
             .on("zoom", (event) => {
-                const { x, y, k } = event.transform; // Destructure the transform object to get translate and scale
-
-                // Apply the transformation with potential constraints
+                const { x, y, k } = event.transform;
                 svg.selectAll("path").attr(
                     "transform",
                     `translate(${x},${y}) scale(${k})`
                 );
             });
-
         // @ts-ignore
         svg.call(zoom);
 
-        var width = +svg.attr("width");
-        var height = +svg.attr("height");
-
-        // Map and projection
-        var pathGenerator = d3.geoPath();
+        // projection
         var projection = d3.geoEquirectangular();
 
         Promise.all([
-            fetch(
-                "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson"
-            ).then((response) => response.json()),
-            d3.csv(
-                "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world_population.csv"
-            ),
+            fetch("./world.geojson").then((response) => response.json()),
+            d3.csv<Features>("./owid-subset.csv"),
         ]).then(([geo_json, csv]) => {
             ready(geo_json, csv);
         });
 
-        var colorScale = d3
-            .scaleThreshold()
-            .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
-            // @ts-ignore
-            .range(d3.schemeOranges[7]);
-
         function ready(
             geo_json: d3.ExtendedFeatureCollection,
-            csv: d3.DSVRowArray
+            csv: d3.DSVRowArray<Features>
         ) {
-            var map = new Map<string, number>();
-            csv.forEach((row) => map.set(row.code, +row.pop));
-            console.log(map);
+            console.log(geo_json);
+            console.log(csv);
+
+            // i don't want to have to recalculate the set
+            // at the cost of more memory, i'll just store the entire csv in a map
+            var map = new Map<string, MapElement>();
+            csv.forEach((row) =>
+                map.set(`${row.iso_code}-${row.year}`, {
+                    country: row.country,
+                    solar_consumption: +row.solar_consumption,
+                    wind_consumption: +row.wind_consumption,
+                    hydro_consumption: +row.hydro_consumption,
+                    biofuel_consumption: +row.biofuel_consumption,
+                    coal_consumption: +row.coal_consumption,
+                    gas_consumption: +row.gas_consumption,
+                    oil_consumption: +row.oil_consumption,
+                    nuclear_consumption: +row.nuclear_consumption,
+                })
+            );
 
             let mouseOver = function (e: MouseEvent) {
                 const target = e.target as HTMLElement;
+                const datapoint = map.get(`${target.id}-${year}`)!;
 
                 d3.selectAll(".Country") // reset all countries
                     .transition()
@@ -84,11 +114,25 @@
                     .style("opacity", 1)
                     .style("stroke", "black");
 
-                console.log(d3.select("#tooltip"))
+                // display tooltip with country name and display total depending on the filters selected
+
+                let html_string = ""
+                let total = 0;
+                let merged = Object.assign({}, filters.renewable_types, filters.fossil_fuel_types, filters.other_types)
+                for (const [key, value] of Object.entries(merged)) {
+                    if(value) {
+                        html_string += `${capitalizeFirstLetter(key)}: ${datapoint[key + "_consumption"]}<br>`
+                        total += Number(datapoint[key + "_consumption"])
+                    }
+                }
+                console.log(html_string)
+                console.log(total)
 
                 d3.select("#tooltip")
                     .style("opacity", 1)
-                    .html(`Region: ${target.id}<br>Value: ${map.get(target.id)}`); // Set the tooltip content
+                    .html(
+                        `Region: ${datapoint.country}<br>TOTAL: ${total}<br>${html_string}`
+                    )
             };
 
             let mouseLeave = function (e: MouseEvent) {
@@ -97,7 +141,7 @@
                     .duration(200)
                     .style("opacity", 1)
                     .style("stroke", "transparent");
-                d3.select("#tooltip").style("opacity", 0); // Hide the tooltip
+                // d3.select("#tooltip").style("opacity", 0); // Hide the tooltip
             };
 
             let mouseMove = function (e: MouseEvent) {
@@ -116,8 +160,36 @@
                 // configure a svg path generator to use the projection function provided
                 .attr("d", d3.geoPath().projection(projection))
                 .attr("fill", function (d) {
-                    // @ts-ignore
-                    return colorScale(map.get(d.id) || 0);
+                    const datapoint = map.get(`${d.id}-${year}`);
+                    // sum across all consumptions
+                    const totalConsumption =
+                        (filters.renewable_types.solar
+                            ? datapoint?.solar_consumption || 0
+                            : 0) +
+                        (filters.renewable_types.wind
+                            ? datapoint?.wind_consumption || 0
+                            : 0) +
+                        (filters.renewable_types.hydro
+                            ? datapoint?.hydro_consumption || 0
+                            : 0) +
+                        (filters.renewable_types.biofuel
+                            ? datapoint?.biofuel_consumption || 0
+                            : 0) +
+                        (filters.fossil_fuel_types.coal
+                            ? datapoint?.coal_consumption || 0
+                            : 0) +
+                        (filters.fossil_fuel_types.gas
+                            ? datapoint?.gas_consumption || 0
+                            : 0) +
+                        (filters.fossil_fuel_types.oil
+                            ? datapoint?.oil_consumption || 0
+                            : 0) +
+                        (filters.other_types.nuclear
+                            ? datapoint?.nuclear_consumption || 0
+                            : 0);
+
+                    console.log(d.id, totalConsumption);
+                    return colorScale(totalConsumption);
                 })
                 .style("stroke", "transparent")
                 .attr("class", (d) => "Country")
@@ -125,28 +197,29 @@
                 .style("opacity", 1)
                 .on("mouseover", mouseOver)
                 .on("mouseleave", mouseLeave);
+
         }
     });
 
     $: year = 2000;
     $: filters = {
-        renewables: false,
+        renewables: true,
         renewable_types: {
-            solar: false,
-            wind: false,
-            hydro: false,
-            biofuel: false,
+            solar: true,
+            wind: true,
+            hydro: true,
+            biofuel: true,
         },
 
-        fossil_fuels: false,
+        fossil_fuels: true,
         fossil_fuel_types: {
-            coal: false,
-            oil: false,
-            gas: false,
+            coal: true,
+            oil: true,
+            gas: true,
         },
-        others: false,
+        others: true,
         other_types: {
-            nuclear: false,
+            nuclear: true,
         },
     };
 
@@ -164,12 +237,13 @@
             filters.fossil_fuel_types.coal = setTo;
             filters.fossil_fuel_types.oil = setTo;
             filters.fossil_fuel_types.gas = setTo;
-        } else if(type == "others") {
+        } else if (type == "others") {
             const setTo = !filters.others;
             filters.others = setTo;
             filters.other_types.nuclear = setTo;
         }
     };
+
 
     function capitalizeFirstLetter(string: string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -245,19 +319,24 @@
                         </label>
                     </li>
                 {/each}
+            </ul>
         </form>
         <div>
             <form>
                 <label>
-                    Year<br>
-                    <input bind:value={year}><br>
-                    <input type="range" bind:value={year} name="volume" min="1950" max="2016">
+                    Year<br />
+                    <input class="year" bind:value={year} /><br />
+                    <input
+                        class="year"
+                        type="range"
+                        bind:value={year}
+                        name="volume"
+                        min="1950"
+                        max="2016"
+                    />
                 </label>
             </form>
-            <div id="tooltip" style="opacity: 0;">
-                ASDF
-                asdf
-            </div>
+            <div id="tooltip" style="opacity: 0;">ASDF asdf</div>
             <svg id="my_dataviz"></svg>
         </div>
     </div>
