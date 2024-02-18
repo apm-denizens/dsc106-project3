@@ -69,30 +69,26 @@
             csv.forEach((row) => map.set(row.code, +row.pop));
             console.log(map);
 
-            // @ts-ignore
             let mouseOver = function (e: MouseEvent) {
-                console.log(e)
+                const target = e.target as HTMLElement;
+
                 d3.selectAll(".Country") // reset all countries
                     .transition()
                     .duration(200)
                     .style("opacity", 0.5)
                     .style("stroke", "transparent");
 
-                d3.select(e.target as HTMLElement)
+                d3.select(target)
                     .transition()
                     .duration(200)
                     .style("opacity", 1)
                     .style("stroke", "black");
-                // @ts-ignore
-                // d3.select(this)
-                //     .transition()
-                //     .duration(200)
-                //     .style("opacity", 1)
-                //     .style("stroke", "black");
-                // d3.select("#tooltip")
-                    // .style("opacity", 1) // Show the tooltip
-                    // @ts-ignore
-                    // .html(`Region: ${d.properties.name}<br>Value: ${d.value}`); // Set the tooltip content
+
+                console.log(d3.select("#tooltip"))
+
+                d3.select("#tooltip")
+                    .style("opacity", 1)
+                    .html(`Region: ${target.id}<br>Value: ${map.get(target.id)}`); // Set the tooltip content
             };
 
             let mouseLeave = function (e: MouseEvent) {
@@ -129,8 +125,6 @@
                 .style("opacity", 1)
                 .on("mouseover", mouseOver)
                 .on("mouseleave", mouseLeave);
-
-            svg.selectAll("path");
         }
     });
 
@@ -235,6 +229,9 @@
                     <input type="range" bind:value={year} name="volume" min="1950" max="2016">
                 </label>
             </form>
+            <div id="tooltip">
+                ASDF
+            </div>
             <svg id="my_dataviz"></svg>
         </div>
     </div>
