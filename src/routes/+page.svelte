@@ -204,16 +204,6 @@
     });
 
     let year = 2000;
-    $: {
-        console.log(year)
-
-    }
-    // $: {
-    //     console.log(year)
-    //     d3.selectAll("path")    
-    //             .data(geo_json.features)
-    //             .enter()
-    // }
     let filters = {
         renewables: true,
         renewable_types: {
@@ -235,7 +225,7 @@
         },
     };
 
-    const handleFilterInput = (type: "renewables" | "ffs" | "others") => {
+    const handleFilterInput = (type: "renewables" | "ffs" | "others" | "single") => {
         if (type == "renewables") {
             const setTo = !filters.renewables;
             filters.renewables = setTo;
@@ -254,7 +244,14 @@
             filters.others = setTo;
             filters.other_types.nuclear = setTo;
         }
+        filters = filters 
     };
+
+    // seems you have to place reactive statements after the function definitions
+    $: {
+        console.log(year)
+        console.log(filters)
+    }
 
 
     function capitalizeFirstLetter(string: string) {
