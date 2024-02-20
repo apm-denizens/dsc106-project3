@@ -373,7 +373,7 @@
                         d3.select("#tooltip")
                 .style("opacity", 1)
                 .html(
-                    `Region: ${datapoint.country}<br>TOTAL: ${Math.round(
+                    `Region: ${datapoint.country}<br>TOTAL (TWh): ${Math.round(
                         total
                     )}<br>${html_string}`
                 );
