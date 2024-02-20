@@ -32,11 +32,15 @@
         .domain([1000, 3000, 5000, 7000, 10000, 13000])
         .range(d3.schemeOranges[7]);
 
-    
+    let mouseX = 0;
+    let mouseY = 0;
+
     let mounted = false;
     let gjson: d3.ExtendedFeatureCollection | undefined = undefined;
     let gmap: Map<string, MapElement> | undefined = undefined;
-    let gpath: d3.GeoPath<d3.GeoPermissibleObjects, d3.GeoPermissibleObjects> | undefined = undefined;
+    let gpath:
+        | d3.GeoPath<d3.GeoPermissibleObjects, d3.GeoPermissibleObjects>
+        | undefined = undefined;
     onMount(async () => {
         let svg = d3.select("svg");
         let width = 800;
@@ -126,13 +130,22 @@
 
                 // display tooltip with country name and display total depending on the filters selected
 
-                let html_string = ""
+                let html_string = "";
                 let total = 0;
-                let merged = Object.assign({}, filters.renewable_types, filters.fossil_fuel_types, filters.other_types)
+                let merged = Object.assign(
+                    {},
+                    filters.renewable_types,
+                    filters.fossil_fuel_types,
+                    filters.other_types
+                );
                 for (const [key, value] of Object.entries(merged)) {
-                    if(value) {
-                        html_string += `${capitalizeFirstLetter(key)}: ${Math.round(Number(datapoint[key + "_consumption"]))}<br>`
-                        total += Number(datapoint[key + "_consumption"])
+                    if (value) {
+                        html_string += `${capitalizeFirstLetter(
+                            key
+                        )}: ${Math.round(
+                            Number(datapoint[key + "_consumption"])
+                        )}<br>`;
+                        total += Number(datapoint[key + "_consumption"]);
                     }
                 }
                 // console.log(html_string)
@@ -141,8 +154,17 @@
                 d3.select("#tooltip")
                     .style("opacity", 1)
                     .html(
-                        `Region: ${datapoint.country}<br>TOTAL: ${Math.round(total)}<br>${html_string}`
-                    )
+                        `Region: ${datapoint.country}<br>TOTAL: ${Math.round(
+                            total
+                        )}<br>${html_string}`
+                    );
+
+                const boundingRect = target.getBoundingClientRect();
+
+                d3.select("#tooltip2")
+                    .style("opacity", 1)
+                    .style("top", `${boundingRect.y + boundingRect.height}px`)
+                    .style("left", `${mouseX}px`);
             };
 
             let mouseLeave = function (e: MouseEvent) {
@@ -152,12 +174,6 @@
                     .style("opacity", 1)
                     .style("stroke", "transparent");
                 // d3.select("#tooltip").style("opacity", 0); // Hide the tooltip
-            };
-
-            let mouseMove = function (e: MouseEvent) {
-                d3.select("#tooltip")
-                    .style("left", e.pageX + 10 + "px") // Position the tooltip to the right of the cursor
-                    .style("top", e.pageY + 10 + "px"); // Position the tooltip below the cursor
             };
 
             svg.append("g")
@@ -209,6 +225,12 @@
 
             mounted = true;
         }
+
+                // add listener for mouse movement to update mouse position variables
+                document.addEventListener("mousemove", (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
     });
 
     let year = 2000;
@@ -233,7 +255,9 @@
         },
     };
 
-    const handleFilterInput = (type: "renewables" | "ffs" | "others" | "single") => {
+    const handleFilterInput = (
+        type: "renewables" | "ffs" | "others" | "single"
+    ) => {
         if (type == "renewables") {
             const setTo = !filters.renewables;
             filters.renewables = setTo;
@@ -252,22 +276,21 @@
             filters.others = setTo;
             filters.other_types.nuclear = setTo;
         }
-        filters = filters 
+        filters = filters;
     };
 
     // seems you have to place reactive statements after the function definitions
     // variables used inside this reactive statement are considered dependencies i guess
     // so you have to make sure that they're used inside the reactive statement
     $: {
-        if(mounted && gjson && gmap) {
-            console.log(mounted)
-            console.log(year)
-            console.log(filters)
-            console.log(gmap)
+        if (mounted && gjson && gmap) {
+            console.log(mounted);
+            console.log(year);
+            console.log(filters);
+            console.log(gmap);
             console.log(gjson);
-            console.log(gpath)
+            console.log(gpath);
 
-            
             d3.selectAll("path")
                 .data(gjson.features)
                 .attr("fill", function (d) {
@@ -301,23 +324,15 @@
 
                     // console.log(d.id, totalConsumption);
                     return colorScale(totalConsumption);
-                })
-            
+                });
         }
-    }
 
+    }
 
     function capitalizeFirstLetter(string: string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 </script>
-
-<style>
-    h1 {
-        text-align: center;
-        font-family: 'YourChosenFont', sans-serif; /* Replace 'YourChosenFont' with the desired font */
-    }
-</style>
 
 <div>
     <h1>Worldwide Energy Usage</h1>
@@ -406,7 +421,20 @@
                 </label>
             </form>
             <div id="tooltip" style="opacity: 0;">ASDF asdf</div>
+            <div
+                id="tooltip2"
+                style="opacity: 0; position: absolute; top: 10px;"
+            >
+                testing
+            </div>
         </div>
         <svg id="my_dataviz"></svg>
     </div>
 </div>
+
+<style>
+    h1 {
+        text-align: center;
+        font-family: "YourChosenFont", sans-serif; /* Replace 'YourChosenFont' with the desired font */
+    }
+</style>
