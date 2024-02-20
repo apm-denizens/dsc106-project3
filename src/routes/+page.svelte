@@ -34,6 +34,7 @@
 
     let mouseX = 0;
     let mouseY = 0;
+    let currentTarget: HTMLElement | undefined = undefined;
 
     let mounted = false;
     let gjson: d3.ExtendedFeatureCollection | undefined = undefined;
@@ -116,6 +117,8 @@
                 const target = e.target as HTMLElement;
                 const datapoint = map.get(`${target.id}-${year}`)!;
 
+                currentTarget = target;
+
                 d3.selectAll(".Country") // reset all countries
                     .transition()
                     .duration(200)
@@ -163,8 +166,16 @@
 
                 d3.select("#tooltip2")
                     .style("opacity", 1)
-                    .style("top", `${boundingRect.y + boundingRect.height}px`)
-                    .style("left", `${mouseX}px`);
+                    .style("top", `${boundingRect.y + boundingRect.height + 20}px`)
+                    .style("left", `${mouseX}px`)
+                    .html(
+                        `Region: ${datapoint.country}<br>TOTAL: ${Math.round(
+                            total
+                        )}<br>${html_string}`
+                    )
+                    
+                    
+
             };
 
             let mouseLeave = function (e: MouseEvent) {
@@ -173,7 +184,7 @@
                     .duration(200)
                     .style("opacity", 1)
                     .style("stroke", "transparent");
-                // d3.select("#tooltip").style("opacity", 0); // Hide the tooltip
+                d3.select("#tooltip2").style("opacity", 0); // Hide the tooltip
             };
 
             svg.append("g")
@@ -226,8 +237,8 @@
             mounted = true;
         }
 
-                // add listener for mouse movement to update mouse position variables
-                document.addEventListener("mousemove", (e) => {
+        // add listener for mouse movement to update mouse position variables
+        document.addEventListener("mousemove", (e) => {
             mouseX = e.clientX;
             mouseY = e.clientY;
         });
@@ -283,7 +294,7 @@
     // variables used inside this reactive statement are considered dependencies i guess
     // so you have to make sure that they're used inside the reactive statement
     $: {
-        if (mounted && gjson && gmap) {
+        if (mounted && gjson && gmap && currentTarget) {
             console.log(mounted);
             console.log(year);
             console.log(filters);
@@ -325,8 +336,39 @@
                     // console.log(d.id, totalConsumption);
                     return colorScale(totalConsumption);
                 });
-        }
 
+
+            console.log('testing123')
+            const target = currentTarget as HTMLElement;
+            console.log(target)
+            // const datapoint = gmap.get(`${target.id}-${year}`)!;
+            // let html_string = "";
+            // let total = 0;
+            // let merged = Object.assign(
+            //     {},
+            //     filters.renewable_types,
+            //     filters.fossil_fuel_types,
+            //     filters.other_types
+            // );
+            // for (const [key, value] of Object.entries(merged)) {
+            //     if (value) {
+            //         html_string += `${capitalizeFirstLetter(key)}: ${Math.round(
+            //             Number(datapoint[key + "_consumption"])
+            //         )}<br>`;
+            //         total += Number(datapoint[key + "_consumption"]);
+            //     }
+            // }
+
+            // d3.select("#tooltip")
+            //     .style("opacity", 1)
+            //     .html(
+            //         `Region: ${datapoint.country}<br>TOTAL: ${Math.round(
+            //             total
+            //         )}<br>${html_string}`
+            //     );
+
+            // d3.select(currentTarget as HTMLElement)
+        }
     }
 
     function capitalizeFirstLetter(string: string) {
@@ -423,7 +465,7 @@
             <div id="tooltip" style="opacity: 0;">ASDF asdf</div>
             <div
                 id="tooltip2"
-                style="opacity: 0; position: absolute; top: 10px;"
+                style="opacity: 0; position: absolute; top: 10px; padding: 10px; background-color: white; border: 1px solid black; border-radius: 4px;"
             >
                 testing
             </div>
