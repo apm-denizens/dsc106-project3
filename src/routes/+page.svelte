@@ -171,7 +171,7 @@
                     .style("top", `${boundingRect.y + boundingRect.height + 20}px`)
                     .style("left", `${mouseX}px`)
                     .html(
-                        `Region: ${datapoint.country}<br>TOTAL: ${Math.round(
+                        `Region: ${datapoint.country}<br>TOTAL (TWh): ${Math.round(
                             total
                         )}<br>${html_string}`
                     )
