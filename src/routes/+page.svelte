@@ -428,6 +428,86 @@
     }
 </script>
 
+<style>
+
+    h1 {
+        text-align: center;
+        font-family: 'Tahoma', sans-serif;
+    }
+    
+    .year {
+        width: 50%;
+        height: 20px;
+        border-radius: 8px;
+        font-family: 'Tahoma', sans-serif;
+    }
+    
+    .slider-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .slider-label {
+        font-size: 16px;
+        font-family: 'Tahoma', sans-serif; 
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    input[type="range"] {
+        -webkit-appearance: none;
+        width: 90%;
+        height: 8px;
+        background: #e8c1736c;
+        border-radius: 5px;
+        outline: none;
+        opacity: 0.7;
+        -webkit-transition: 0.2s;
+        transition: opacity 0.2s;
+    }
+
+    input[type="range"]:hover {
+        opacity: 1;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #ed7b17;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #f59b2c; 
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    input[type="checkbox"] {
+        color: #ff5733 !important; /* Replace with the desired color */
+    }
+
+    #tooltip2 {
+        opacity: 0;
+        position: absolute;
+        top: 10px;
+        padding: 10px;
+        background-color: #f8883867 !important;
+        border: .5px solid black;
+        border-radius: 4px;
+        font-family: 'Tahoma', sans-serif;
+    }
+
+</style>
+
 <div>
     <h1>Worldwide Energy Usage</h1>
 
@@ -503,7 +583,7 @@
             <form>
                 <label>
                     Year<br />
-                    <input class="year" bind:value={year} /><br />
+                    <input class="year" bind:value={year} style="font-family:'Tahoma', sans-serif;" /><br />
                     <input
                         class="year"
                         type="range"
@@ -522,13 +602,6 @@
                 testing
             </div>
         </div>
-        <svg id="my_dataviz"></svg>
+        <svg id="my_dataviz"style="width: 1200px; height: 500px;"></svg>
     </div>
 </div>
-
-<style>
-    h1 {
-        text-align: center;
-        font-family: "YourChosenFont", sans-serif; /* Replace 'YourChosenFont' with the desired font */
-    }
-</style>
