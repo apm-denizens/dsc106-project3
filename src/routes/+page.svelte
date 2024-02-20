@@ -117,7 +117,9 @@
                 const target = e.target as HTMLElement;
                 const datapoint = map.get(`${target.id}-${year}`)!;
 
-                currentTarget = target;
+                if(target) {
+                    currentTarget = target;
+                }
 
                 d3.selectAll(".Country") // reset all countries
                     .transition()
@@ -294,13 +296,13 @@
     // variables used inside this reactive statement are considered dependencies i guess
     // so you have to make sure that they're used inside the reactive statement
     $: {
-        if (mounted && gjson && gmap && currentTarget) {
-            console.log(mounted);
-            console.log(year);
-            console.log(filters);
-            console.log(gmap);
-            console.log(gjson);
-            console.log(gpath);
+        if (mounted && gjson && gmap) {
+            // console.log(mounted);
+            // console.log(year);
+            // console.log(filters);
+            // console.log(gmap);
+            // console.log(gjson);
+            // console.log(gpath);
 
             d3.selectAll("path")
                 .data(gjson.features)
@@ -337,38 +339,88 @@
                     return colorScale(totalConsumption);
                 });
 
+        }
+    }
+    $: {
+        console.log(currentTarget)
+        console.log(year)
+        if(currentTarget) {
 
             console.log('testing123')
             const target = currentTarget as HTMLElement;
-            console.log(target)
-            // const datapoint = gmap.get(`${target.id}-${year}`)!;
-            // let html_string = "";
-            // let total = 0;
-            // let merged = Object.assign(
-            //     {},
-            //     filters.renewable_types,
-            //     filters.fossil_fuel_types,
-            //     filters.other_types
-            // );
-            // for (const [key, value] of Object.entries(merged)) {
-            //     if (value) {
-            //         html_string += `${capitalizeFirstLetter(key)}: ${Math.round(
-            //             Number(datapoint[key + "_consumption"])
-            //         )}<br>`;
-            //         total += Number(datapoint[key + "_consumption"]);
-            //     }
-            // }
+            console.log("target" + target)
+            const datapoint = gmap.get(`${target.id}-${year}`)!;
+            if(datapoint !== undefined) {
+                console.log("datapoint" + datapoint)
 
-            // d3.select("#tooltip")
-            //     .style("opacity", 1)
-            //     .html(
-            //         `Region: ${datapoint.country}<br>TOTAL: ${Math.round(
-            //             total
-            //         )}<br>${html_string}`
-            //     );
+            let html_string = "";
+            let total = 0;
+            let merged = Object.assign(
+                {},
+                filters.renewable_types,
+                filters.fossil_fuel_types,
+                filters.other_types
+            );
+            for (const [key, value] of Object.entries(merged)) {
+                if (value) {
+                    html_string += `${capitalizeFirstLetter(key)}: ${Math.round(
+                       Number(datapoint[key + "_consumption"]) 
+                    )}<br>`;
+                    total += Number(datapoint[key + "_consumption"]) 
+                }
+            }
 
-            // d3.select(currentTarget as HTMLElement)
+                        d3.select("#tooltip")
+                .style("opacity", 1)
+                .html(
+                    `Region: ${datapoint.country}<br>TOTAL: ${Math.round(
+                        total
+                    )}<br>${html_string}`
+                );
+            }
+
         }
+        // if(currentTarget) {
+        //     console.log('testing123')
+        //     const target = currentTarget as HTMLElement;
+        //     const datapoint = gmap.get(`${target.id}-${year}`)!;
+        //     console.log(datapoint)
+
+        //     let html_string = "";
+        //     let total = 0;
+        //     let merged = Object.assign(
+        //         {},
+        //         filters.renewable_types,
+        //         filters.fossil_fuel_types,
+        //         filters.other_types
+        //     );
+        //     for (const [key, value] of Object.entries(merged)) {
+        //         if (value) {
+        //             const datapoint_val = 0
+        //             try {
+        //                 Number(datapoint[key + "_consumption"])
+        //             }  catch(e) {}
+                    
+        //             html_string += `${capitalizeFirstLetter(key)}: ${Math.round(
+        //                datapoint_val 
+        //             )}<br>`;
+        //             total += datapoint_val;
+        //         }
+        //     }
+
+        //     d3.select("#tooltip")
+        //         .style("opacity", 1)
+        //         .html(
+        //             `Region: ${datapoint.country}<br>TOTAL: ${Math.round(
+        //                 total
+        //             )}<br>${html_string}`
+        //         );
+
+
+        //     console.log(html_string)
+            
+
+        // }
     }
 
     function capitalizeFirstLetter(string: string) {
