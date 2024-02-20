@@ -312,6 +312,13 @@
     }
 </script>
 
+<style>
+    h1 {
+        text-align: center;
+        font-family: 'YourChosenFont', sans-serif; /* Replace 'YourChosenFont' with the desired font */
+    }
+</style>
+
 <div>
     <h1>Worldwide Energy Usage</h1>
 
